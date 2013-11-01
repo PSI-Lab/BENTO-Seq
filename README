@@ -1,0 +1,12 @@
+This directory contains the bootstrap tool to estimate PSI distributions 
+based on aligned RNA-Seq data (BAM/SAM files).
+
+Currently you need to run the Perl script "BAM2tri_rd.pl" followed by 
+the Matlab script "bootstrap_psi.m"; later on all Matlab files will be 
+converted to Python and a master Python script will be provided to run 
+everything.
+
+Two sample BAM files ("TopHat2_chr21.bam" and "STAR_chr21.bam") and a 
+sample exon triplet file ("RefSeq_exon_triplet_chr21.tab") are provided 
+to quickly test the bootstrap tool.
+
