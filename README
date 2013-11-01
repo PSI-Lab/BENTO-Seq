@@ -8,5 +8,7 @@ everything.
 
 Two sample BAM files ("TopHat2_chr21.bam" and "STAR_chr21.bam") and a 
 sample exon triplet file ("RefSeq_exon_triplet_chr21.tab") are provided 
-to quickly test the bootstrap tool.
+to quickly test the bootstrap tool. This is done by, e.g., first running 
+"./BAM2tri_rd.pl TopHat2_chr21.bam RefSeq_exon_triplet_chr21.tab" and then 
+run "bootstrap_psi.m" within Matlab.
 
