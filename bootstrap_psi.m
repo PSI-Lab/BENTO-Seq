@@ -1,4 +1,5 @@
 % estimate PSI by bootstrap
+clear;
 file_name = 'triplet_junc_rd.tsv'; tic
 [ c1a,ac2,c1c2,id,n_c1a,n_ac2,n_c1c2,cover ] = load_TRI_RD_file(file_name);
 fprintf('Loaded triplet read distribution file %s...\n', file_name);
@@ -12,7 +13,7 @@ for i = 1:N
     psi_samples(i,:) = psit;
     psi_bootstrap(i) = mean(psit);
     psi_bootstrap_std(i) = std(psit);
-    if (mod(i,1000) == 0)
+    if (mod(i,100) == 0)
         fprintf('%d out of %d triplets processed...\n', i, N);
     end
 end
