@@ -10,12 +10,12 @@ use Getopt::Std;
 
 my $start = time();
 my $Usage = "Usage: $0 [-o min_overhang -d edit_distance -m multi_hit] TRI_file [BAM/SAM_file]\n";
-@ARGV >= 2 or die $Usage;
+@ARGV >= 1 or die $Usage;
 my %options=();
 getopts("l:o:d:m:", \%options);
 
 # parse input arguments
-my ($TRI_file, $BAM_file) = @ARGV[-2..-1];
+my ($TRI_file, $BAM_file) = @ARGV[-2..-1]; #print "$TRI_file\t$BAM_file\n";
 my ($length, $overhang, $dist, $multi) = (75, 8, 2, 1);
 $overhang = $options{o} if (defined $options{o});
 $dist = $options{d} if (defined $options{d});
@@ -45,15 +45,19 @@ if ($BAM_file =~ /bam$/)
     $cmd = "./filter_junc_read.pl $BAM_file | ./build_junc_rd.pl -l $length > $file_out";
     print "$cmd\n"; system("$cmd");
 } else {
+    $TRI_file = $BAM_file;
     if (-e $file_out) { 
-	print "Using previoulsy processed junction read density file ...\n"; 
+	print "Using previoulsy processed junction read density file \"$file_out\" ...\n"; 
     } else { 
-	print "Previously processed junction read density file $file_out doesn't exist!\n";
-	print "Please provide a BAM/SAM file.\n"; exit;
+	print "Error: junction read density file \"$file_out\" not found!\n";
+	print "Please provide a BAM/SAM file in addition to the TRI_File.\n"; 
+	print $Usage; exit;
     }
 }
 
-#die "$length";
+unless ($TRI_file) { 
+    print "Error: TRI_file not specified!\n"; print $Usage; exit; 
+}
 $cmd = "./extract_tri_junc_rd.pl $TRI_file $file_out";
 print "$cmd\n"; system("$cmd");   
 
