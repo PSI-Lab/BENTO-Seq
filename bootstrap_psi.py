@@ -26,13 +26,13 @@ def gen_samples(c1a, ac2, c1c2, K):
     psit = incl / all_l;
     return psit;
 
-print 'Argument List:', str(sys.argv)
+#print 'Argument List:', str(sys.argv)
 
 K = 10000; # number of bootstrap samples
 suffix = "psi_bootstrap";
 file_result = suffix + ".result";
 file_sample = suffix + ".sample";
-header = "#ID\tPSI_standard\tPSI_bootstrap\tPSI_bootstrap_std\n";
+header = "#ID\tn_C1A\tn_AC2\tn_C1C2\tPSI_standard\tPSI_bootstrap\tPSI_bootstrap_std\n";
 #print file_result, header
 f_r = open(file_result, 'w');
 f_r.write(header); #f_r.close();
@@ -59,12 +59,11 @@ for i in np.arange(N):
     # process the samples
     psi_bootstrap[i] = np.mean(psit);
     psi_b_std[i] = np.std(psit);
-    str_out = ("%s\t%f\t%f\t%f\n" % (ID[i], psi_standard[i], 
-                                     psi_bootstrap[i], psi_b_std[i]));
+    str_out = ("%s\t%d\t%d\t%d\t%f\t%f\t%f\n" % (ID[i], n_C1A[i], n_AC2[i], n_C1C2[i], psi_standard[i], psi_bootstrap[i], psi_b_std[i]));
     f_r.write(str_out);                            
     
     # print progress
-    if ((i+1) % 100 == 0): 
+    if ((i+1) % 1000 == 0): 
         print "%d out of %d triplets have been processed..." % (i+1, N+1)
 
 f_r.close()
