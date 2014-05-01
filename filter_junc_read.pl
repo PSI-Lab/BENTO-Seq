@@ -4,6 +4,7 @@
 #    -d: maximum edit distance (default 2, include mismatch, indel and clipping)
 #    -m: maximum multiple hits (default 1)
 # (could use the optional MD field if that becomes widely available later on)
+# The current version works for TopHat and STAR BAM files
 #
 # Written by Leo J Lee, with help from Alice Gao
 # PSI lab, University of Toronto, 2013
