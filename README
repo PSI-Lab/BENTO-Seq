@@ -2,15 +2,15 @@ This directory contains the bootstrap tool to estimate PSI distributions
 based on aligned RNA-Seq data (BAM/SAM files). The updated version 
 works for all major types of AS events.
 
-You need to run the Perl script "BAM2event_RD.pl" followed by a Python
-script (to be written by Hui & Hannes). 
+You need to run the Perl script "BAM2event_RD.pl" followed by the Python
+script "./bootstrap_PSI.py". 
 
 Two sample BAM files ("TopHat2_chr21.bam" and "STAR_chr21.bam") and a 
 sample event specfication file ("events_chr21.tab") are provided to test 
 the bootstrap tool. This is done by, e.g., first running 
 "./BAM2event_RD.pl events_chr21.tab TopHat2_chr21.bam" (which outputs 
-"event_inc_exc.rd") and then the python script.
-
+"event_inc_exc.rd") and then run "./bootstrap_PSI.py" (which outputs 
+"psi_bootstrap.result").
 
 ------------------------------------------------------------------------
 This is the old README for the previous version:
