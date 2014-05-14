@@ -65,7 +65,7 @@ while (<>)
     next if ($n_NM > $max_NM);
 
     # indels right at the splice junction are not allowed
-    next if ($CIGAR =~ /(\d+)[ID](\d+)N/ or $CIGAR =~ /(\d+)[ID](\d+)N/);
+    next if ($CIGAR =~ /(\d+)[ID](\d+)N/ or $CIGAR =~ /(\d+)N(\d+)[ID]/);
     # skip reads with indels, for debugging
     #next if ($CIGAR =~ /(\d+)[ID]/);
 
@@ -79,13 +79,14 @@ while (<>)
      	    $CIGAR =~ s/(\d+)M(\d+)([ID])/${n_tmp}M/;
 	    #print "$CIGAR\n";
     	}
-    	while ($CIGAR =~ /(\d+)N(\d+)([ID])(\d+)M/g) {
-	    #print "$read\t$CIGAR_old:\t$CIGAR -> ";
-    	    if ($3 eq "I") { $n_tmp = $4; } #Alice used "$4 - $2"
-    	    else { $n_tmp = $4 + $2; }
-    	    $CIGAR =~ s/(\d+N)(\d+)([ID])(\d+)M/$1${n_tmp}M/;
-	    #print "$CIGAR\n";
-    	}
+	# This was used to accomodate some bugs in STAR
+    	# while ($CIGAR =~ /(\d+)N(\d+)([ID])(\d+)M/g) {
+	#     #print "$read\t$CIGAR_old:\t$CIGAR -> ";
+    	#     if ($3 eq "I") { $n_tmp = $4; } #Alice used "$4 - $2"
+    	#     else { $n_tmp = $4 + $2; }
+    	#     $CIGAR =~ s/(\d+N)(\d+)([ID])(\d+)M/$1${n_tmp}M/;
+	#     #print "$CIGAR\n";
+    	# }
 	# merge consecutive matches resulted from previous steps
 	while ($CIGAR =~ /(\d+)M(\d+)M/g) {
 	    #print "$read\t$CIGAR_old:\t$CIGAR -> ";
