@@ -10,7 +10,7 @@ from itertools import izip
 
 tstart = datetime.now()
     
-def gen_pdf(inc, exc, n_bootstrap_samples, n_grid_points, a=1., b=1., r=0.):
+def gen_pdf(inc, exc, n_bootstrap_samples=1000, n_grid_points=100, a=1., b=1., r=0.):
     """Generate bootstrap PDF of PSI"""
 
     grid = np.arange(1. / (2 * n_grid_points), 1., 1. / n_grid_points)
@@ -30,7 +30,7 @@ def gen_pdf(inc, exc, n_bootstrap_samples, n_grid_points, a=1., b=1., r=0.):
     pdf = pdf.sum(0) / n_bootstrap_samples
 
     return pdf, grid
-    
+
 def main(n_bootstrap_samples=1000, n_grid_points=100):
     suffix = "psi_bootstrap"
     file_result = suffix + ".result"

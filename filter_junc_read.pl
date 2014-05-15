@@ -112,7 +112,7 @@ while (<>)
     $pos = "$pos,$end1";
     # all coordinates in $pos are 1-based!
     #print modified $CIGAR in comment line as debug reference
-    print "## $read:\t$CIGAR_old -> $CIGAR\n" unless ($CIGAR_old eq $CIGAR);
+    # print "## $read:\t$CIGAR_old -> $CIGAR\n" unless ($CIGAR_old eq $CIGAR);
     print "$read\t$n_NM\t$n_NH\t$chr\t$strand\t$n_junc\t$pos\t$CIGAR\n";
 
     # for debugging multi-junction reads
