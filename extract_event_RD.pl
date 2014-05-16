@@ -151,7 +151,7 @@ while (<IN>)
 	    $n_event--; next;
 	}
 	#avoid double counting reads spanning two splice junctions
-	my $l = $l_r - $o - $l_e2;
+	my $l = $l_r - 2*$o - $l_e2;
 	if ($l>0) { splice @rd_e1e2, -$l; }
 	@rd_inc = (@rd_e1e2, @rd_e2e3);
 	@rd_exc = @rd_e1e3;
@@ -170,7 +170,7 @@ while (<IN>)
 	}
 	@rd_inc = @rd_e1e2;
 	@rd_exc = @rd_e1e3;
-    } elsif ($type eq "MEX") {
+    } elsif ($type eq "MXE") {
 	unless ($e2_s > $e1_e and $e3_s > $e2_e and $e4_s > $e3_e) {
 	    print "$id is not a valid MXE event, skipping...\n";
 	    $n_event--; next;
@@ -188,9 +188,9 @@ while (<IN>)
 	    @rd_e3e4 = reverse @rd_e3e4 if ($strand eq "-");
 	}
 	#avoid double counting reads spanning two splice junctions
-	my $l = $l_r - $o - $l_e2;
+	my $l = $l_r - 2*$o - $l_e2;
 	if ($l>0) { splice @rd_e1e2, -$l; }
-	$l = $l_r - $o - $l_e3;
+	$l = $l_r - 2*$o - $l_e3;
 	if ($l>0) { splice @rd_e1e3, -$l; }
 	@rd_inc = (@rd_e1e2, @rd_e2e4);
 	@rd_exc = (@rd_e1e3, @rd_e3e4);
