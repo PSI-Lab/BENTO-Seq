@@ -223,39 +223,3 @@ class AltSpliceEvent(object):
         psi_std = np.sqrt(np.sum(pdf * np.square(grid - psi_bootstrap)))
 
         return n_inc, n_exc, p_inc, p_exc, psi_standard, psi_bootstrap, psi_std
-
-def process_event_file(args):
-    with open(args.event_definitions) as f:
-        output_file = open(args.output_file, 'w')
-        bamfile = pysam.Samfile(args.bamfile, check_header=False)
-
-        # Write header
-        output_file.write(
-        '\t'.join(('#ID', 'n_inc', 'n_exc', 'p_inc', 'p_exc', 'PSI_standard',
-                   'PSI_bootstrap', 'PSI_bootstrap_std')) + '\n')
-    
-        for line in f:
-            line = line.rstrip()
-            if line.startswith('#') or not line: continue
-            elements = line.split('\t')
-            event_type, event_id, chromosome, strand = elements[:4]
-            if event_type.upper() is not 'MXE':
-                exons = [tuple(map(int, e.split(':'))) for e in elements[4:7]]
-            else:
-                exons = [tuple(map(int, e.split(':'))) for e in elements[4:8]]
-            event = AltSpliceEvent(event_type, event_id, chromosome,
-                                   strand, exons,
-                                   one_based_pos=args.one_based_coordinates)
-            event.build_read_distribution(bamfile, args.min_overhang,
-                                          args.max_edit_distance,
-                                          args.max_num_mapped_loci)
-            psi_event = event.bootstrap_event(args.n_bootstrap_samples,
-                                              args.n_grid_points,
-                                              args.a, args.b, args.r)
-            output_file.write(
-                '\t'.join([event.event_id] + map(str, psi_event)) + '\n'
-            )
-            
-
-        output_file.close()
-            
