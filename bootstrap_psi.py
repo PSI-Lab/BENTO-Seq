@@ -1,74 +1,99 @@
-#!/usr/bin/python
-# This is the master python script for the bootstrap tool
+#!/usr/bin/env python
 
-import numpy as np
-# import scipy as sp
-import sys
-from StringIO import StringIO
-from datetime import datetime
+import sys, argparse
+from bootstrap_tool.alt_splice_event import process_event_file
 
-tstart = datetime.now();
+def run_bootstrap():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('event_definitions',
+                        help="Alternative splicing event definitions file. "
+                        "See http://github.com/xxxx for an example and "
+                        "formatting instructions.")
+    parser.add_argument('bamfile',
+                        help="A bam-file with aligned reads from either the "
+                        "TopHat or the STAR read alignmnent tool. Must be a "
+                        "binary and indexed bam-file (.bam file extension "
+                        "and a .bai index file must be present in the "
+                        "same directory.)")
 
-def gen_samples(c1a, ac2, c1c2, K):
-    "Generate bootstrap samples of PSI"
-    n = c1a.size; #print n
-    idx1 = np.random.randint(0,n,[n,K]);
-    idx2 = np.random.randint(0,n,[n,K]);
-    idx3 = np.random.randint(0,n,[n,K]);
-    ninc = np.sum(c1a[idx1],axis=0) + np.sum(ac2[idx2],axis=0);
-    nexc = np.sum(c1c2[idx3],axis=0);
-    incl = np.zeros(K); excl = np.zeros(K);
-    for i in np.arange(K):
-        incl[i] = np.random.gamma(ninc[i]/2+1);
-        excl[i] = np.random.gamma(nexc[i]+1);
+    parser.add_argument('output_file', help="Name of the file where "
+                        "the output should be stored. If the file "
+                        "exists, it will be overwritten.")
+
+    parser.add_argument('-1', '--one-based-coordinates',
+                        action='store_true', help="Use this option when "
+                        "the coordinates in your event file use "
+                        "one-based indexing. Otherwise, standard Python "
+                        "zero-based indexing is used, i.e. the first "
+                        "element is 0 and intervals are "
+                        "right-open. [1:4] --> (1, 2, 3).")
+
+    parser.add_argument('-nm', '--max-edit-distance',
+                        help="(default=2) The maximum edit distance or "
+                        "number of mismatches allowed for a read. If "
+                        "the edit distance is greater than this, the "
+                        "read will not be counted towards the read  "
+                        "distribution. The edit distance is the number "
+                        "of insertions, deletions, or substitutions "
+                        "required to match the read to the consensus "
+                        "sequence (reference genome). The edit "
+                        "distance corresponds to the 'NM' tag in "
+                        "bam-files created with TopHat and the 'nM' in "
+                        "files created with SAM.", type=int, default=2)
+
+    parser.add_argument('-nh', '--max-num-mapped-loci',
+                        help="(default=1) The maximum number of loci "
+                        "(genome locations) that a read "
+                        "is allowed to be mapped to. If the number of "
+                        "loci the read is mapped to is greater than "
+                        "this, the the read will not be counted towards "
+                        "the read distribution. By default, only "
+                        "uniquely mapped reads are considered "
+                        "(--max-num-mapped-loci=1). The number of "
+                        "mapped loci is given by the 'NH' tag in the "
+                        "bam-file.", type=int, default=1)
+
+    parser.add_argument('-oh', '--min-overhang',
+                        help="(default=5) The minimum overhang of a read "
+                        "on either side of the splice junction to be "
+                        "considered for the read distribution. By default "
+                        "a read must have a 5nt overhang on either side of "
+                        "the splice junction to be counted.",
+                        type=int, default=5)
+
+    parser.add_argument('-S', '--n-bootstrap-samples',
+                        help="(default=1000) The number of bootstrap  "
+                        "samples to draw for each event. More bootstrap "
+                        "samples will better estimate the bootstrap "
+                        "probability density function, but will need "
+                        "more memory and will take longer to compute.",
+                        type=int, default=1000)
+
+    parser.add_argument('-G', '--n-grid-points',
+                        help="(default=100) The number of points "
+                        "used for the numerical approximation of the "
+                        "bootstrap probability density function. More "
+                        "points will better estimate the bootstrap "
+                        "probability density function, but will need "
+                        "more memory and will take longer to compute.",
+                        type=int, default=100)
+
+    parser.add_argument('-a', help="(default=1) Bayesian pseudo-count "
+                        "for inclusion reads. See http://github.com/xxx "
+                        "for details.", type=int, default=1)
     
-    all_l = incl + excl;    
-    psit = incl / all_l;
-    return psit;
+    parser.add_argument('-b', help="(default=1) Bayesian pseudo-count "
+                        "for exclusion reads. See http://github.com/xxx "
+                        "for details.", type=int, default=1)
 
-#print 'Argument List:', str(sys.argv)
+    parser.add_argument('-r', help="(default=0) Bayesian pseudo-count "
+                        "for numerical integration of bootstrap "
+                        "probability density function. See "
+                        "http://github.com/xxx for details.", type=int,
+                        default=1)
 
-K = 10000; # number of bootstrap samples
-suffix = "psi_bootstrap";
-file_result = suffix + ".result";
-file_sample = suffix + ".sample";
-header = "#ID\tn_C1A\tn_AC2\tn_C1C2\tPSI_standard\tPSI_bootstrap\tPSI_bootstrap_std\n";
-#print file_result, header
-f_r = open(file_result, 'w');
-f_r.write(header); #f_r.close();
+    args = parser.parse_args()
+    process_event_file(args)
 
-file_junc_rd = 'triplet_junc_rd.tsv';
-data_rd = np.genfromtxt(file_junc_rd, delimiter="\t", dtype="O,f,f,f,O,O,O,O", 
-                        names=True);
-ID = data_rd['ID']; N = ID.size;
-n_C1A = data_rd['n_C1A']; n_AC2 = data_rd['n_AC2']; n_C1C2 = data_rd['n_C1C2'];
-n_inc = (n_C1A + n_AC2)/2;
-psi_standard = (n_inc + 1)/(n_inc + n_C1C2 + 2);
-psi_bootstrap = np.zeros(N); psi_b_std = np.zeros(N);
-#psi_b_std = psi_bootstrap; #this will make both the same all the time!
-rd_C1A = data_rd['RD_C1A']; rd_AC2 = data_rd['RD_AC2']; 
-rd_C1C2 = data_rd['RD_C1C2'];
-
-for i in np.arange(N):
-    c1a = np.genfromtxt(StringIO(rd_C1A[i].strip(",")), delimiter=",");
-    # print i, c1a;
-    ac2 = np.genfromtxt(StringIO(rd_AC2[i].strip(",")), delimiter=",");
-    c1c2 = np.genfromtxt(StringIO(rd_C1C2[i].strip(",")), delimiter=",");
-    # generate bootstrap samples here!
-    psit = gen_samples(c1a, ac2, c1c2, K);
-    # process the samples
-    psi_bootstrap[i] = np.mean(psit);
-    psi_b_std[i] = np.std(psit);
-    str_out = ("%s\t%d\t%d\t%d\t%f\t%f\t%f\n" % (ID[i], n_C1A[i], n_AC2[i], n_C1C2[i], psi_standard[i], psi_bootstrap[i], psi_b_std[i]));
-    f_r.write(str_out);                            
-    
-    # print progress
-    if ((i+1) % 1000 == 0): 
-        print "%d out of %d triplets have been processed..." % (i+1, N+1)
-
-f_r.close()
-
-tend = datetime.now();
-tdiff = tend - tstart;
-runtime = tdiff.seconds/60.0;
-print "Finished processing all %d triplets in %g minutes!" % (N+1, runtime)
+if __name__ == '__main__':
+    sys.exit(run_bootstrap())
