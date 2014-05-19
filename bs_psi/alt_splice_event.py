@@ -1,6 +1,6 @@
 import numpy as np
 import pysam
-from .bamfile_parsing import read_distribution_for_junction
+from .read_distribution import ReadDistribution
 from .bootstrap import gen_pdf
 
 class AltSpliceEvent(object):
@@ -108,7 +108,7 @@ class AltSpliceEvent(object):
         self.junction_read_distributions = []
         for junction in self.junctions:
             read_distribution = \
-                read_distribution_for_junction(
+                ReadDistribution.from_junction(
                     samfile, junction,
                     max_edit_distance,
                     max_num_mapped_loci)

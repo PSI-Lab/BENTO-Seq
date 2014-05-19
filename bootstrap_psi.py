@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys, argparse, pysam
-from bootstrap_tool.alt_splice_event import AltSpliceEvent
+from bootstrap_psi.alt_splice_event import AltSpliceEvent
 
 def run_bootstrap():
     parser = argparse.ArgumentParser()
