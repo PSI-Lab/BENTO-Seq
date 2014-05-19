@@ -15,6 +15,29 @@ find_junctions = re.compile(r'(\d+)M(\d+)N')        # Find splice junctions
 last_match = re.compile(r'(\d+)M$')                 # Find last aligned segment
 
 class ReadDistribution(object):
+    """This class represents a distribution of reads across a splice junction.
+
+    **Parameters:**
+
+    chromosome : string
+
+    start : int
+        Start of the splice junction, must be 0-based coordinate.
+
+    end : int
+        End of the splice junction, must be 0-based coordinate.
+
+    read_length : int
+
+    read_distribution : dict (optional)
+
+        Read distribution as a dictionary in the format ``{pos1:
+        counts1, pos2: counts2, ...}``, where the keys are position
+        relative to the splice junction, *i.e.* ``-10`` would be the
+        position 10nt upstream of the splice junction.
+
+    """
+    
     __slots__ = ['_counter', '_read_ids', 'chromosome', 'start', 'end', 'read_length']
 
     def __init__(self, chromosome, start, end, read_length, read_distribution=None):
@@ -26,13 +49,34 @@ class ReadDistribution(object):
         self._read_ids = {}
 
     def to_list(self, min_overhang=0):
+        """Return the read distribution as a list given the minimum overhang.
+
+        **Parameters:**
+
+        min_overhang : int (default=0)
+
+            The minimum overhang for which to compute the read
+            distribution. *E.g.* if the read length is 75 and
+            ``min_overhang=5``, then the read distribution is computed
+            for positions ``[-70, -69, ..., -5]``.
+
+        **Returns:**
+
+        read_distribution : list
+            Read distribution in the format ``[(pos1, counts1), (pos2,
+            counts2), ...]``.
+        """
+    
         return [(pos, self._counter[pos]) for pos in self.get_positions(min_overhang)]
 
-    def __getitem__(self, key):
-        return self._counter[key]
+    def __getitem__(self, pos):
+        """Return the number of reads at ``pos``.
+        """
+    
+        return self._counter[pos]
 
-    def __setitem__(self, key, value):
-        self._counter[key] = value
+    def __setitem__(self, pos, value):
+        self._counter[pos] = value
 
     def get_positions(self, min_overhang):
         """Get all possible mapping positions for a read length and
@@ -43,21 +87,53 @@ class ReadDistribution(object):
         end = - min_overhang + 1
         return range(start, end)
 
-    def inc(self, rel_pos, read_id):
+    def inc(self, rel_pos, read):
+        """Add a read to the distribution and keep a reference to it.
+
+        **Parameters:**
+
+        rel_pos : int
+            Mapping position of the read relative to the splice junction.
+
+        read : :py:class:`pysam.AlignedRead`
+            Reference to the read.
+
+        """
+    
         if rel_pos not in self._read_ids:
             self._read_ids[rel_pos] = []
         self._read_ids[rel_pos].append(read_id)
         self._counter[rel_pos] += 1
 
     @classmethod
-    def from_junction(cls, samfile, junction,
-                                       max_edit_distance=2,
-                                       max_num_mapped_loci=1):
+    def from_junction(cls, bamfile, junction,
+                      max_edit_distance=2,
+                      max_num_mapped_loci=1):
+        """Build the read distribution from a BAM-file.
+
+        **Parameters:**
+
+        bamfile : :py:class:`pysam.Samfile`
+
+        junction : tuple
+            Tuple in the format ``(chromosome, start, end)``.
+
+        max_edit_distance : int (default=2)
+
+        max_num_mapped_loci : int (default=1)
+
+        **Returns:**
+
+        read_distribution : :class:`bs_psi.read_distribution.ReadDistribution`    
+
+        """
+
+    
         chromosome, junction_start, junction_end = junction
-        read_length = samfile.next().rlen
+        read_length = bamfile.next().rlen
         read_distribution = cls(chromosome, junction_start, junction_end, read_length)
 
-        for read in samfile.fetch(chromosome, junction_start, junction_start + 1):
+        for read in bamfile.fetch(chromosome, junction_start, junction_start + 1):
             # Skip reads without junctions
             if not has_junction.search(read.cigarstring): continue
 
@@ -152,6 +228,6 @@ class ReadDistribution(object):
             junction_idx = read_junctions.index((junction_start, junction_end))
             rel_pos = -sum(block_sizes[:(junction_idx + 1)])
 
-            read_distribution.inc(rel_pos, read.qname)
+            read_distribution.inc(rel_pos, read)
 
         return read_distribution
