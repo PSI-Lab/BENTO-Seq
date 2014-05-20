@@ -19,9 +19,9 @@ def gen_pdf(inc, exc, n_bootstrap_samples=1000, n_grid_points=100, a=1., b=1., r
 
     logpdf = (ninc + a - 1)[:, na] * np.log(grid) + (nexc + b - 1)[:, na] * np.log(1 - grid) - \
              (ninc + nexc)[:, na] * np.log(grid * pinc + (1 - grid) * pexc + r)
-    logpdf -= logpdf.max(1, keepdims=True)
+    logpdf -= logpdf.max(1)[:,na]
     pdf = np.exp(logpdf)
-    pdf /= pdf.sum(1, keepdims=True)
+    pdf /= pdf.sum(1)[:,na]
     pdf = pdf.sum(0) / n_bootstrap_samples
 
     return pdf, grid
