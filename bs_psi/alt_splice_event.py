@@ -324,10 +324,10 @@ class AltSpliceEvent(object):
         p_exc = reads_exc.size
 
         min_p = min(p_inc, p_exc)
-        scaled_inc = n_inc / p_inc * min_p
-        scaled_exc = n_exc / p_exc * min_p
+        scaled_inc = float(n_inc) / p_inc * min_p
+        scaled_exc = float(n_exc) / p_exc * min_p
 
-        psi_standard = (scaled_inc + 1.) / (scaled_inc + scaled_exc + 2)
+        psi_standard = (scaled_inc + 1) / (scaled_inc + scaled_exc + 2)
 
         pdf, grid = gen_pdf(reads_inc, reads_exc,
                             n_bootstrap_samples, n_grid_points, a, b, r)
