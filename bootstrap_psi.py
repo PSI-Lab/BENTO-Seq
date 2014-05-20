@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 
-import sys, argparse, pysam
-from bootstrap_psi.alt_splice_event import AltSpliceEvent
+import sys, argparse, pysam, warnings
+from bs_psi.alt_splice_event import AltSpliceEvent
+
+def _warning(
+    message,
+    category = UserWarning,
+    filename = '',
+    lineno = -1):
+    """Make warnings a little cleaner."""
+    print(message)
+
+warnings.showwarning = _warning
 
 def run_bootstrap():
     parser = argparse.ArgumentParser()
@@ -27,6 +37,10 @@ def run_bootstrap():
                         "zero-based indexing is used, i.e. the first "
                         "element is 0 and intervals are "
                         "right-open. [1:4] --> (1, 2, 3).")
+
+    parser.add_argument('-q', '--quiet',
+                        action='store_true',
+                        help="Suppress all warnings and messages")
 
     parser.add_argument('-nm', '--max-edit-distance',
                         help="(default=2) The maximum edit distance or "
@@ -93,6 +107,7 @@ def run_bootstrap():
                         default=1)
 
     args = parser.parse_args()
+    if args.quiet: warnings.simplefilter("ignore")
     process_event_file(args)
 
 def process_event_file(args):

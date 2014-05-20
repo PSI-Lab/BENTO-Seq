@@ -1,5 +1,5 @@
 import numpy as np
-import pysam
+import pysam, warnings
 from .read_distribution import ReadDistribution
 from .bootstrap import gen_pdf
 
@@ -172,6 +172,13 @@ class AltSpliceEvent(object):
                     bamfile, junction,
                     max_edit_distance,
                     max_num_mapped_loci)
+
+            if read_distribution.is_empty:
+                warnings.warn("Event %s: No reads in %s "
+                              "map to junction %s:%d:%d." %
+                              (self.event_id, bamfile.filename,
+                               junction[0], junction[1], junction[2]))
+            
             read_length = read_distribution.read_length
 
             positions, reads = zip(

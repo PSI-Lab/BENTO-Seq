@@ -48,6 +48,13 @@ class ReadDistribution(object):
         self._counter = Counter(read_distribution)
         self._read_ids = {}
 
+    @property
+    def is_empty(self):
+        """Returns whether the read distribution contains any reads.
+        """
+    
+        return not bool(self._counter)
+
     def to_list(self, min_overhang=0):
         """Return the read distribution as a list given the minimum overhang.
 
@@ -102,7 +109,7 @@ class ReadDistribution(object):
     
         if rel_pos not in self._read_ids:
             self._read_ids[rel_pos] = []
-        self._read_ids[rel_pos].append(read_id)
+        self._read_ids[rel_pos].append(read)
         self._counter[rel_pos] += 1
 
     @classmethod
