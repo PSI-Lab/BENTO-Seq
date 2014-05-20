@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
-import sys, argparse, pysam, warnings
+import sys, argparse, pysam, logging, datetime
 from bs_psi.alt_splice_event import AltSpliceEvent
 
-def _warning(
-    message,
-    category = UserWarning,
-    filename = '',
-    lineno = -1):
-    """Make warnings a little cleaner."""
-    print(message)
+# def _warning(
+#     message,
+#     category = UserWarning,
+#     filename = '',
+#     lineno = -1):
+#     """Make warnings a little cleaner."""
+#     print(message)
 
-warnings.showwarning = _warning
+# warnings.showwarning = _warning
 
 def run_bootstrap():
     parser = argparse.ArgumentParser()
@@ -107,10 +107,14 @@ def run_bootstrap():
                         default=1)
 
     args = parser.parse_args()
-    if args.quiet: warnings.simplefilter("ignore")
+    if not args.quiet:
+        logging.basicConfig(level='INFO')
+    else:
+        logging.basicConfig(level='ERROR')
     process_event_file(args)
 
 def process_event_file(args):
+    start_t = datetime.datetime.now()
     with open(args.event_definitions) as f:
         output_file = open(args.output_file, 'w')
         bamfile = pysam.Samfile(args.bamfile, check_header=False)
@@ -120,7 +124,7 @@ def process_event_file(args):
         '\t'.join(('#ID', 'n_inc', 'n_exc', 'p_inc', 'p_exc', 'PSI_standard',
                    'PSI_bootstrap', 'PSI_bootstrap_std')) + '\n')
     
-        for line in f:
+        for n_events, line in enumerate(f):
             line = line.rstrip()
             if line.startswith('#') or not line: continue
             elements = line.split('\t')
@@ -144,6 +148,9 @@ def process_event_file(args):
             
 
         output_file.close()
+        logging.info("Output written to file '%s'." % args.output_file)
+        runtime = datetime.datetime.now() - start_t
+        logging.info("Processed %d events in %.2f seconds." % (n_events, runtime.total_seconds()))
             
 if __name__ == '__main__':
     sys.exit(run_bootstrap())
