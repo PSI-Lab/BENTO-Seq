@@ -9,5 +9,5 @@ setup(name='Bootstrap PSI',
       author_email='hannes@psi.utoronto.ca',
       packages=['bootstrap_psi'],
       scripts=['bin/bootstrap-psi'],
-      install_requries=['pysam (>=0.7.8)', 'numpy (>=1.6)']
+      install_requires=['pysam', 'numpy']
     )
