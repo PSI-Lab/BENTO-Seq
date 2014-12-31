@@ -58,7 +58,7 @@ copyright = u'2014, Hannes Bretschneider'
 #
 # The short X.Y version.
 # version = '0.1dev'
-from bootstrap_psi.version import version
+from bento_seq.version import version
 # The full version, including alpha/beta/rc tags.
 release = version
 # release = '0.1dev'
