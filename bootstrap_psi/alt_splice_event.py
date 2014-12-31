@@ -49,7 +49,7 @@ class AltSpliceEvent(object):
 
         if event_type == 'MXE' and len(exons) != 4:
             raise ValueError("Incorrect number of exons: %d (must be 4)." % len(exons))
-        elif len(exons) != 3:
+        elif event_type != 'MXE' and len(exons) != 3:
             raise ValueError("Incorrect number of exons: %d (must be 3)." % len(exons))
 
         for i, exon in enumerate(exons):
@@ -129,7 +129,7 @@ class AltSpliceEvent(object):
                     self.exons[2][0] > self.exons[1][1]):
                 raise ValueError("Event is not a valid AFE event.")
         elif self.event_type == 'ALE':
-            if not (self.exons[1][0] > self.exons[2][1] and
+            if not (self.exons[1][0] > self.exons[0][1] and
                     self.exons[2][0] > self.exons[0][1]):
                 raise ValueError("Event is not a valid ALE event.")
         elif self.event_type == 'SPR':

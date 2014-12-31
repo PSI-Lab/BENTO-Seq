@@ -129,7 +129,7 @@ def process_event_file(args):
             if line.startswith('#') or not line: continue
             elements = line.split('\t')
             event_type, event_id, chromosome, strand = elements[:4]
-            if event_type.upper() is not 'MXE':
+            if event_type.upper() != 'MXE':
                 exons = [tuple(map(int, e.split(':'))) for e in elements[4:7]]
             else:
                 exons = [tuple(map(int, e.split(':'))) for e in elements[4:8]]
