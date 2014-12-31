@@ -1,0 +1,2 @@
+class BENTOSeqError(Exception):
+    pass

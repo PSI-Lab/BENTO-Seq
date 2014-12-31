@@ -2,6 +2,7 @@ import numpy as np
 import pysam, logging
 from .read_distribution import ReadDistribution
 from .bootstrap import gen_pdf
+from . import BENTOSeqError
 
 class AltSpliceEvent(object):
     """ This class represents an alternative splicing event, defined
@@ -45,19 +46,19 @@ class AltSpliceEvent(object):
         event_type = event_type.upper()
         
         if event_type not in ('CAS', 'A5SS', 'A3SS', 'MXE', 'AFE', 'ALE', 'SPR'):
-            raise ValueError("Unknown alternative splicing event type: %s" % str(event_type))
+            raise BENTOSeqError("Unknown alternative splicing event type: %s" % str(event_type))
 
         if event_type == 'MXE' and len(exons) != 4:
-            raise ValueError("Incorrect number of exons: %d (must be 4)." % len(exons))
+            raise BENTOSeqError("Incorrect number of exons: %d (must be 4)." % len(exons))
         elif event_type != 'MXE' and len(exons) != 3:
-            raise ValueError("Incorrect number of exons: %d (must be 3)." % len(exons))
+            raise BENTOSeqError("Incorrect number of exons: %d (must be 3)." % len(exons))
 
         for i, exon in enumerate(exons):
             if len(exon) != 2:
-                raise ValueError("Exon #%d has wrong length: %d (must be 2)." % len(exon))
+                raise BENTOSeqError("Exon #%d has wrong length: %d (must be 2)." % len(exon))
 
         if strand not in ('-', '+'):
-            raise ValueError("Unknown strand type: %s (must be '+' or '-')." % str(strand))
+            raise BENTOSeqError("Unknown strand type: %s (must be '+' or '-')." % str(strand))
 
         self.event_type = event_type
         self.event_id = event_id
@@ -69,44 +70,40 @@ class AltSpliceEvent(object):
             self.exons = [(e[0] - 1, e[1]) for e in self.exons]
 
         if strand == '-':
-            self.exons = [(-e[0], -e[1]) for e in self.exons]
+            self.exons = [(-e[1] + 1, -e[0] + 1) for e in self.exons]
 
-        # Swap exon end and start if in wrong order
-        self.exons = [(e[1], e[0]) if e[0] > e[1] else e for e in self.exons]
-
-        for i in range(len(self.exons) - 1):
-            if not ((self.exons[1][0] > self.exons[0][0] or
-                     self.exons[1][1] > self.exons[0][1]) and
-                    (self.exons[2][0] > self.exons[1][0] or
-                     self.exons[2][1] > self.exons[1][1])):
-                raise ValueError("Exons must be listed from 5' to 3' "
-                                 "on the transcribed strand.")
+        if not ((self.exons[1][0] > self.exons[0][0] or
+                 self.exons[1][1] > self.exons[0][1]) and
+                (self.exons[2][0] > self.exons[1][0] or
+                 self.exons[2][1] > self.exons[1][1])):
+            raise BENTOSeqError("Exons must be listed from 5' to 3' "
+                                "on the transcribed strand.")
 
         if strand == '+':
             self.junctions = [(self.chromosome, self.exons[0][1], self.exons[1][0]),
                               (self.chromosome, self.exons[1][1], self.exons[2][0]),
                               (self.chromosome, self.exons[0][1], self.exons[2][0])]
         elif strand == '-':
-            self.junctions = [(self.chromosome, -self.exons[1][0], -self.exons[0][1]),
-                              (self.chromosome, -self.exons[2][0], -self.exons[1][1]),
-                              (self.chromosome, -self.exons[2][0], -self.exons[0][1])]
+            self.junctions = [(self.chromosome, -self.exons[1][0] + 1, -self.exons[0][1] + 1),
+                              (self.chromosome, -self.exons[2][0] + 1, -self.exons[1][1] + 1),
+                              (self.chromosome, -self.exons[2][0] + 1, -self.exons[0][1] + 1)]
         else:
-            raise ValueError
+            raise BENTOSeqError
 
         self.exons_lengths = [e[1] - e[0] for e in self.exons]
 
         if self.event_type == 'CAS':
             if not (self.exons[1][0] > self.exons[0][1] and
                     self.exons[2][0] > self.exons[1][1]):
-                raise ValueError("Event is not a valid CAS event.")
+                raise BENTOSeqError("Event is not a valid CAS event.")
         elif self.event_type == 'A5SS':
             if not (self.exons[0][0] == self.exons[1][0] and
                     self.exons[2][0] > self.exons[1][1]):
-                raise ValueError("Event is not a valid A5SS event.")
+                raise BENTOSeqError("Event is not a valid A5SS event.")
         elif self.event_type == 'A3SS':
             if not (self.exons[1][1] == self.exons[2][1] and
                     self.exons[1][0] > self.exons[0][1]):
-                raise ValueError("Event is not a valid A3SS event.")
+                raise BENTOSeqError("Event is not a valid A3SS event.")
         elif self.event_type == 'MXE':
             if strand == '+':
                 self.junctions.append(
@@ -115,29 +112,29 @@ class AltSpliceEvent(object):
                     (self.chromosome, self.exons[2][1], self.exons[3][0]))
             elif strand == '-':
                 self.junctions.append(
-                    (self.chromosome, -self.exons[3][0], -self.exons[1][1]))
+                    (self.chromosome, -self.exons[3][0] + 1, -self.exons[1][1] + 1))
                 self.junctions.append(
-                    (self.chromosome, -self.exons[3][0], -self.exons[2][1]))
+                    (self.chromosome, -self.exons[3][0] + 1, -self.exons[2][1] + 1))
 
             if not(self.exons[1][0] > self.exons[0][1] and
                    self.exons[2][0] > self.exons[1][1] and
                    self.exons[3][0] > self.exons[2][1]):
-                raise ValueError("Event is not a valid MEX event.")
+                raise BENTOSeqError("Event is not a valid MEX event.")
             
         elif self.event_type == 'AFE':
             if not (self.exons[2][0] > self.exons[0][1] and
                     self.exons[2][0] > self.exons[1][1]):
-                raise ValueError("Event is not a valid AFE event.")
+                raise BENTOSeqError("Event is not a valid AFE event.")
         elif self.event_type == 'ALE':
             if not (self.exons[1][0] > self.exons[0][1] and
                     self.exons[2][0] > self.exons[0][1]):
-                raise ValueError("Event is not a valid ALE event.")
+                raise BENTOSeqError("Event is not a valid ALE event.")
         elif self.event_type == 'SPR':
             if not (self.exons[1][0] > self.exons[0][1] and
                     self.exons[2][0] > self.exons[0][1]):
-                raise ValueError("Event is not a valid SPR event.")
+                raise BENTOSeqError("Event is not a valid SPR event.")
         else:
-            raise ValueError
+            raise BENTOSeqError
 
     def build_read_distribution(self, bamfile, min_overhang=5,
                                 max_edit_distance=2,
@@ -242,7 +239,7 @@ class AltSpliceEvent(object):
             self.reads_exc = self.junction_read_distributions[2]
             
         else:
-            raise ValueError
+            raise BENTOSeqError
 
     def trim_reads(self, reads, read_length,
                    min_overhang, exon_length):
@@ -255,7 +252,7 @@ class AltSpliceEvent(object):
         elif event_type in ('AFE', 'ALE'):
             trim = read_length - min_overhang - exon_length
         else:
-            raise ValueError
+            raise BENTOSeqError
         
         if trim > 0:
             if event_type in ('CAS', 'MXE', 'ALE'):        
@@ -263,7 +260,7 @@ class AltSpliceEvent(object):
             elif event_type == 'AFE':
                 reads = reads[-trim:]
             else:
-                raise ValueError
+                raise BENTOSeqError
         return reads
         
     def bootstrap_event(self, n_bootstrap_samples=1000, n_grid_points=100,

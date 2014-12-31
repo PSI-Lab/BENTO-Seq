@@ -1,5 +1,4 @@
-import pysam, re
-import numpy as np
+import re
 from copy import copy
 from collections import Counter
 
