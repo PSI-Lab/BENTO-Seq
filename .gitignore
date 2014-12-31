@@ -4,3 +4,4 @@ _build/
 *~
 *.pyc
 *.egg-info
+.idea/
