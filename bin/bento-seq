@@ -3,6 +3,7 @@
 import sys, argparse, pysam, logging, datetime
 from bento_seq import BENTOSeqError
 from bento_seq.alt_splice_event import AltSpliceEvent
+from bento_seq.load_as_event_data import open_event_file
 
 # def _warning(
 #     message,
@@ -18,8 +19,11 @@ def run_bootstrap():
     parser = argparse.ArgumentParser()
     parser.add_argument('event_definitions',
                         help="Alternative splicing event definitions file. "
-                        "See http://github.com/xxxx for an example and "
-                        "formatting instructions.")
+                        "This may either be one of the genome identifiers "
+                        "'hg19, hg38, mm9, or mm10 - or a relative path to "
+                        "an event definition file. "
+                        "(See http://github.com/xxxx for an example and "
+                        "formatting instructions.)")
     parser.add_argument('bamfile',
                         help="A bam-file with aligned reads from either the "
                         "TopHat or the STAR read alignmnent tool. Must be a "
@@ -31,17 +35,15 @@ def run_bootstrap():
                         "the output should be stored. If the file "
                         "exists, it will be overwritten.")
 
-    parser.add_argument('-1', '--one-based-coordinates',
+    parser.add_argument('-0', '--zero-based-coordinates',
                         action='store_true', help="Use this option when "
                         "the coordinates in your event file use "
-                        "one-based indexing. Otherwise, standard Python "
-                        "zero-based indexing is used, i.e. the first "
-                        "element is 0 and intervals are "
-                        "right-open. [1:4] --> (1, 2, 3).")
+                        "zero-based indexing. Otherwise, "
+                        "one-based indexing is used (UCSC-style).")
 
-    parser.add_argument('-q', '--quiet',
+    parser.add_argument('-v', '--verbose',
                         action='store_true',
-                        help="Suppress all warnings and messages")
+                        help="Print all warnings and messages")
 
     parser.add_argument('-nm', '--max-edit-distance',
                         help="(default=2) The maximum edit distance or "
@@ -108,7 +110,7 @@ def run_bootstrap():
                         default=1)
 
     args = parser.parse_args()
-    if not args.quiet:
+    if args.verbose:
         logging.basicConfig(level='INFO')
     else:
         logging.basicConfig(level='ERROR')
@@ -116,7 +118,7 @@ def run_bootstrap():
 
 def process_event_file(args):
     start_t = datetime.datetime.now()
-    with open(args.event_definitions) as f:
+    with open_event_file(args.event_definitions) as f:
         output_file = open(args.output_file, 'w')
         bamfile = pysam.Samfile(args.bamfile, check_header=False)
 
@@ -138,7 +140,7 @@ def process_event_file(args):
             try:
                 event = AltSpliceEvent(event_type, event_id, chromosome,
                                        strand, exons,
-                                       one_based_pos=args.one_based_coordinates)
+                                       one_based_pos=not args.zero_based_coordinates)
                 event.build_read_distribution(bamfile, args.min_overhang,
                                               args.max_edit_distance,
                                               args.max_num_mapped_loci)
