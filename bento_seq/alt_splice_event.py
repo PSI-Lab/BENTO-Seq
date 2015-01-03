@@ -117,7 +117,7 @@ class AltSpliceEvent(object):
                     (self.chromosome, -self.exons[3][0] + 1, -self.exons[2][1] + 1))
 
             if not(self.exons[1][0] > self.exons[0][1] and
-                   self.exons[2][0] > self.exons[1][1] and
+                   self.exons[2][0] > self.exons[0][1] and
                    self.exons[3][0] > self.exons[2][1]):
                 raise BENTOSeqError("Event is not a valid MEX event.")
             
