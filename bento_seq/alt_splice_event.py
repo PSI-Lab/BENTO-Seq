@@ -171,11 +171,11 @@ class AltSpliceEvent(object):
                     max_num_mapped_loci)
 
             if read_distribution.is_empty:
-                logging.warning("Event %s: No reads in %s "
-                                "map to junction %s:%d:%d." %
-                                (self.event_id, bamfile.filename,
-                                 junction[0], junction[1], junction[2]))
-            
+                logging.debug("Event %s: No reads in %s "
+                              "map to junction %s:%d:%d." %
+                              (self.event_id, bamfile.filename,
+                               junction[0], junction[1], junction[2]))
+
             read_length = read_distribution.read_length
 
             positions, reads = zip(

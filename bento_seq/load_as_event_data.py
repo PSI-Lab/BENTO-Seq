@@ -37,6 +37,19 @@ def clear_data_home():
     data_home = get_data_home()
     shutil.rmtree(data_home)
 
+def count_lines(filename, comment_char=None):
+    if filename.endswith('gz') or filename.endswith('gzip'):
+        f = gzip.open(filename)
+    else:
+        f = open(filename)
+
+    if comment_char is None:
+        lines = sum(1 for _ in f)
+    else:
+        return sum(1 for line in f if not line.startswith(comment_char))
+
+    return lines
+
 def fetch(genome):
     if not os.path.isdir(get_data_home()):
         os.makedirs(get_data_home())
