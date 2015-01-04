@@ -115,12 +115,13 @@ def run_bootstrap():
                         default=1)
 
     args = parser.parse_args()
+    FORMAT = '%(message)s'
     if args.verbose:
         logging.basicConfig(level='DEBUG')
     elif args.quiet:
         logging.basicConfig(level="ERROR")
     else:
-        logging.basicConfig(level='INFO')
+        logging.basicConfig(level='INFO', format=FORMAT)
     process_event_file(args)
 
 def process_event_file(args):
