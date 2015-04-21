@@ -136,7 +136,7 @@ class AltSpliceEvent(object):
         else:
             raise BENTOSeqError
 
-    def build_read_distribution(self, bamfile, min_overhang=5,
+    def build_read_distribution(self, bamfiles, min_overhang=5,
                                 max_edit_distance=2,
                                 max_num_mapped_loci=1):
 
@@ -144,8 +144,8 @@ class AltSpliceEvent(object):
 
         **Parameters:**
 
-        bamfile : :py:class:`pysam.Samfile`
-            Reference to a binary, sorted, and indexed SAM-file.
+        bamfile : list of :py:class:`pysam.Samfile`
+            List of feferences to binary, sorted, and indexed SAM-files.
 
         min_overhang : int (default=5)
             Minimum overhang on either side of the splice junction
@@ -166,14 +166,14 @@ class AltSpliceEvent(object):
         for junction in self.junctions:
             read_distribution = \
                 ReadDistribution.from_junction(
-                    bamfile, junction,
+                    bamfiles, junction,
                     max_edit_distance,
                     max_num_mapped_loci)
 
             if read_distribution.is_empty:
-                logging.debug("Event %s: No reads in %s "
+                logging.debug("Event %s: No reads in BAM-files "
                               "map to junction %s:%d:%d." %
-                              (self.event_id, bamfile.filename,
+                              (self.event_id,
                                junction[0], junction[1], junction[2]))
 
             read_length = read_distribution.read_length

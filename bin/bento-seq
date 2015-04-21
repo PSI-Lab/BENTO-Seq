@@ -24,16 +24,17 @@ def run_bootstrap():
                         "an event definition file. "
                         "(See http://github.com/xxxx for an example and "
                         "formatting instructions.)")
-    parser.add_argument('bamfile',
-                        help="A bam-file with aligned reads from either the "
+    parser.add_argument('--output_file', '-O',
+                        help="Name of the file where "
+                        "the output should be stored. If the file "
+                        "exists, it will be overwritten.")
+
+    parser.add_argument('--bam_files', '-B', nargs='+',
+                        help="One or multiple bam-files with aligned reads from either the "
                         "TopHat or the STAR read alignmnent tool. Must be a "
                         "binary and indexed bam-file (.bam file extension "
                         "and a .bai index file must be present in the "
                         "same directory.)")
-
-    parser.add_argument('output_file', help="Name of the file where "
-                        "the output should be stored. If the file "
-                        "exists, it will be overwritten.")
 
     parser.add_argument('-0', '--zero-based-coordinates',
                         action='store_true', help="Use this option when "
@@ -126,11 +127,15 @@ def run_bootstrap():
 
 def process_event_file(args):
     start_t = datetime.datetime.now()
-    n_events = count_lines(fetch(args.event_definitions), '#')
+    try:
+        event_filename = fetch(args.event_definitions)
+    except KeyError:
+        event_filename = args.event_definitions
+    n_events = count_lines(event_filename, '#')
     logging.info("Processing %d splicing events in %s." % (n_events, args.event_definitions))
     with open_event_file(args.event_definitions) as f:
         output_file = open(args.output_file, 'w')
-        bamfile = pysam.Samfile(args.bamfile, check_header=False)
+        bamfiles = [pysam.Samfile(bamfile, check_header=False) for bamfile in args.bam_files]
 
         # Write header
         output_file.write(
@@ -153,7 +158,7 @@ def process_event_file(args):
                 event = AltSpliceEvent(event_type, event_id, chromosome,
                                        strand, exons,
                                        one_based_pos=not args.zero_based_coordinates)
-                event.build_read_distribution(bamfile, args.min_overhang,
+                event.build_read_distribution(bamfiles, args.min_overhang,
                                               args.max_edit_distance,
                                               args.max_num_mapped_loci)
                 psi_event = event.bootstrap_event(args.n_bootstrap_samples,
